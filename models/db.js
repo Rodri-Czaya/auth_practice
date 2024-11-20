@@ -17,7 +17,8 @@ db.serialize(() => {
       password TEXT NOT NULL,
       isAdmin BOOLEAN DEFAULT 0,
       loginAttempts INTEGER DEFAULT 0,
-      isLocked BOOLEAN DEFAULT 0
+      isLocked BOOLEAN DEFAULT 0,
+      lockedUntil INTEGER DEFAULT NULL
     )
   `, (err) => {
     if (err) console.error('Error creating users table:', err.message);

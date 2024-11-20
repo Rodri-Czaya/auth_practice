@@ -1,2 +1,4 @@
 node_modules/
 models/database.sqlite
+.env
+.DS_Store
