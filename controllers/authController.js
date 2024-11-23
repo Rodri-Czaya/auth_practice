@@ -2,27 +2,35 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../models/db');
 
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 const register = (req, res) => {
   const { email, password } = req.body;
 
-  // Validate input
   if (!email || !password) {
-    return res.status(400).send('Email and password are required.');
+    return res.status(400).send('Mail and password are required');
   }
 
-  // Hash the password
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) return res.status(500).send('Error hashing the password.');
+  if (!validateEmail(email)) {
+    return res.status(400).send('Mail not valid');
+  }
 
-    // Insert the user into the database
+  if (password.length < 8) {
+    return res.status(400).send('Password must be at least 8 characters long');
+  }
+
+  // Escapar entradas para prevenir inyecciones SQL
+  const sanitizedEmail = email.replace(/'/g, "''");
+
+  bcrypt.hash(password, 10, (err, hash) => {
+    if (err) return res.status(500).send('Error registering user.');
+
     const query = `INSERT INTO users (email, password) VALUES (?, ?)`;
-    db.run(query, [email, hashedPassword], (err) => {
-      if (err) {
-        if (err.message.includes('UNIQUE')) {
-          return res.status(400).send('Email already in use.');
-        }
-        return res.status(500).send('Error registering user.');
-      }
+    db.run(query, [sanitizedEmail, hash], (err) => {
+      if (err) return res.status(500).send('Error creating account.');
       res.redirect('/auth/login');
     });
   });
@@ -41,7 +49,7 @@ const login = (req, res) => {
     if (err) return res.status(500).send('Error fetching user.');
     if (!user) return res.status(404).send('User not found.');
 
-    const now = Math.floor(Date.now() / 1000); // Current time in seconds
+    const now = Math.floor(Date.now() / 1000);
 
     // Check if the account is locked
     if (user.lockedUntil && now < user.lockedUntil) {
