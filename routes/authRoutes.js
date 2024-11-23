@@ -4,7 +4,7 @@ const authController = require('../controllers/authController');
 
 // Render the registration form
 router.get('/register', (req, res) => {
-  res.render('register');
+    res.render('register', { csrfToken: req.csrfToken() });
 });
 
 // Handle registration form submission
@@ -12,17 +12,24 @@ router.post('/register', authController.register);
 
 // Render the login form
 router.get('/login', (req, res) => {
-  res.render('login');
+    res.render('login', { csrfToken: req.csrfToken() });
 });
 
 // Handle login form submission
 router.post('/login', authController.login);
 
-// Placeholder route for user dashboard
+// User View
 router.get('/user', (req, res) => {
-  const user = req.session?.user;
-  if (!user) return res.status(401).send('Access denied.');
-  res.send(`<h1>Hello, ${user.email}!</h1>`);
+    const user = req.session?.user;
+    if (!user) return res.status(401).send('Access denied.');
+    res.render('userView', { user: user }); 
+});
+
+// Logout route
+router.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/');
+    });
 });
 
 module.exports = router;
